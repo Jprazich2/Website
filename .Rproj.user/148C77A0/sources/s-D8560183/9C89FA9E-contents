@@ -1,0 +1,350 @@
+---
+title: "Project 2"
+output:
+  pdf_document: default
+  html_document: default
+---
+
+```{r setup, include=FALSE}
+library(knitr)
+hook_output = knit_hooks$get('output')
+knit_hooks$set(output = function(x, options) {
+  # this hook is used only when the linewidth option is not NULL
+  if (!is.null(n <- options$linewidth)) {
+    x = knitr:::split_lines(x)
+    # any lines wider than n should be wrapped
+    if (any(nchar(x) > n)) x = strwrap(x, width = n)
+    x = paste(x, collapse = '\n')
+  }
+  hook_output(x, options)
+})
+
+knitr::opts_chunk$set(echo = TRUE, eval = TRUE,fig.align="center",warning=FALSE,message=FALSE,fig.width=8, fig.height=5, linewidth=60)
+options(tibble.width = 100,width = 100)
+library(tidyverse)
+```
+
+```{r}
+library(survival)
+
+# My dataset  = mgus2
+head(mgus2)
+```
+# I chose my dataset to be mgus2 and I wish I had found it for Project 1. It's a history of over 1,300 patients with monoclonal gammopathy of undetermined significance (MGUS). MGUS commonly progresses into plasma cell malignancies like multiple myeloma which I am researching! Ok so each patient has an ID, their age at diagnosis, sex, the year of their diagnosis, dxyr, their hemoglobin level, hgb, their creatine level, creat, their monoclonal serum spike, mspike, their time until progression to plasma cell malignancy in months, ptime, a binary variable of if they have progressed to plasma cell malignancy, pstat, their time until death, futime, and a binary variable, death, on if the patient has died yet by the end of data collection 1999. 
+
+
+```{r}
+
+
+mansex <- manova(cbind(ptime,futime, hgb, mspike)~sex, data=mgus2)
+
+mandeath <- manova(cbind(ptime,futime, hgb, mspike, age)~death, data=mgus2)
+
+manpstat<- manova(cbind(ptime,futime, hgb, mspike, age)~pstat, data=mgus2)
+
+# All manovas are significant. Moving to one way ANOVA's
+summary(mansex)
+summary(mandeath)
+summary(manpstat)
+
+# Here are my ANOVA's
+summary.aov(mansex)
+summary.aov(mandeath)
+summary.aov(manpstat)
+
+# T tests are superfluous because all of my categorical variables have two categories so one way anova's already determine which groups are significantly different
+
+# Odds of performing a Type I error
+t1error <- 1 - (0.95^17)
+
+t1error
+```
+
+# I performed 3 MANOVA's and 14 ANOVA's. That is 17 tests! Which means if I didn't do a correction the probability of committing a type I error would be 58.18%. Therefore, a Bonferroni correction for signifance leads to a p value of significance of .05/17 = .0029. This led to a number of relationships no longer being significant. But there are signifcant differences in sex with respect to ptime, futime, and hgb. There were significant differences in ptime, futime, hgb, and age with those patients that were still alive in comparison to the deceased. Last there were significant differences in mspike and futime with patients that had been diagnosed with a PCM versus those who hadn't.
+
+
+```{r}
+
+library(mvtnorm); library(ggExtra)
+
+ggplot(mgus2, aes(x = hgb, y = mspike)) +
+geom_point(alpha = .5) + geom_density_2d(h=2) + coord_fixed() + facet_wrap(~sex)
+
+ggplot(mgus2, aes(x = ptime, y = futime)) +
+geom_point(alpha = .5) + geom_density_2d(h=2) + coord_fixed() + facet_wrap(~sex)
+
+# This doesn't look normal
+ggplot(mgus2, aes(x = ptime, y = age)) +
+geom_point(alpha = .5) + geom_density_2d(h=2) + coord_fixed() + facet_wrap(~sex)
+
+hist(mgus2$futime)
+hist(mgus2$hgb)
+
+
+```
+
+
+#MANOVA assumptions: random samples: patient data is from clinical centers that were participating in data collection, so not completely random from total pool of MGUS patients. Independent observations: Yes. Multivariate normality of DV's. When plotting the combos of two variables against each other most look normal, but not all. When comparing the covariances of the categorical variable pstat, they look approximately similar, could be better.There does not appear to be any wild outliers. The multicolinearity is probably violated because some medical dependent variables like mspike and ptime is probably very correlated. Most ANOVA assumptions are the same as MANOVA's. Independent observations: yes. Random samples: about as best we can do. Most variables are normally distributed with ptime and futime being right skewed.
+
+
+```{r}
+# Calculate test statisitic
+diff_survival_time <- mgus2%>%group_by(sex)%>% summarize(means=mean(futime))%>%summarize(diff(means))
+diff_survival_time
+
+# Create a null sampling distribution
+rand_dist<-vector()
+for(i in 1:5000){
+new<-data.frame(futime=sample(mgus2$futime),sex=mgus2$sex)
+rand_dist[i]<-mean(new[new$sex=="M",]$futime)-
+mean(new[new$sex=="F",]$futime)}
+
+hist(rand_dist)
+abline(v=diff_survival_time, col="red")
+
+p_value <- mean(rand_dist> 13.19085 | rand_dist< -13.19085)
+p_value
+```
+
+# Null hypothesis Ho = There is no difference in survival time between men and women diagnosed with MGUS. Alternative hypothesis Ha = There is a significant difference in survival time between men and women diagnosed with MGUS. The probability of us obtaining a mean difference of that magnitude between sexs by chance is 6 * 10^-4 given our sampling distribution meaning we reject the null hypothesis and conclude that women live significantly longer than men with MGUS.
+
+```{r}
+
+#Center the variables, creating a centered dataset
+cmgus2 <- mgus2
+
+cmgus2$age <- mgus2$age - mean(mgus2$age)
+cmgus2$hgb <- mgus2$hgb - mean(mgus2$hgb, na.rm = T)
+cmgus2$futime <- mgus2$futime - mean(mgus2$futime, na.rm = T )
+cmgus2$ptime <- mgus2$ptime - mean(mgus2$ptime, na.rm = T)
+cmgus2$creat <- mgus2$creat - mean(mgus2$creat, na.rm = T)
+cmgus2$mspike <- mgus2$mspike - mean(mgus2$mspike, na.rm = T)
+
+# Building a linear regression model predicting whether the patient has died based on age, hemoglobin levels, mspike, and pstat
+fit <- lm(futime~age * hgb * mspike, data = cmgus2)
+summary(fit)
+
+new1<-cmgus2
+new1$hgb_c<-mean(mgus2$hgb)
+new1$mean<-predict(fit,new1)
+new1$hgb_c<-mean(mgus2$hgb)+sd(mgus2$hgb)
+new1$plus.sd<-predict(fit,new1)
+new1$hgb_c<-mean(mgus2$hgb)-sd(mgus2$hgb)
+new1$minus.sd<-predict(fit,new1)
+newint<-new1%>%select(futime,age,mean,plus.sd,minus.sd)%>%gather(hgb,value,-futime,-age)
+
+mycols<-c("#619CFF","#F8766D","#00BA38")
+names(mycols)<-c("-1 sd","mean","+1 sd")
+mycols=as.factor(mycols)
+
+ggplot(cmgus2,aes(age,futime),group=mycols)+geom_point()+geom_line(data=new1,aes(y=mean,color="mean"))+geom_line(data=new1,aes(y=plus.sd,color="+1 sd"))+geom_line(data=new1,aes(y=minus.sd,color="-1 sd"))+scale_color_manual(values=mycols)+labs(color="hgb (cont)")+theme(legend.position=c(.9,.2))
+
+
+```
+
+# Interpretation of coefficients: A one unit increase in hemaglobin predicts an increase in survival time of 6.29 months, a one year increase in the age of the patient predicts a 2.33 month decrease of survival time, and a one unit increase of mspike predicts an increase of 9.93 months of survival surprisingly.
+
+
+```{r}
+library(lmtest)
+library(sandwich)
+# Taken from WS15
+resids<-fit$residuals; fitvals<-fit$fitted.values
+ggplot()+geom_point(aes(fitvals,resids))+geom_hline(yintercept=0, col="red")
+
+bptest(fit)
+
+ggplot()+geom_histogram(aes(resids),bins=20)
+
+ggplot()+geom_qq(aes(sample=resids))+geom_qq_line(aes(sample=resids), color='red')
+
+coeftest(fit, vcov=vcovHC(fit))[,1:4] ## Robust SEs
+```
+# Normality assumption looks to be met by histogram, but further check by qqplot shows skewing. Linearity assumption looks to be met. Homoskedasticity assumption definitely fails and bptest confirms. When using robust standard errors to negate heteroskedasticity, my p values did not change very much and all three remained very significantly associated with survival time. My model explains 23.83% of the variation of the data.
+
+```{r}
+
+# Building a linear regression model predicting whether the patient has died based on age, hemoglobin levels, mspike, and pstat
+fit <- lm(futime~age * hgb * mspike, data = cmgus2)
+
+# here's a way to sample people/rows from your dataset with replacement
+boot_dat<-cmgus2[sample(nrow(cmgus2),replace=TRUE),]
+
+
+samp_distn<-replicate(5000, {
+  boot_dat<-boot_dat<-cmgus2[sample(nrow(cmgus2),replace=TRUE),]
+  fit<-lm(futime~age * mspike * hgb, data=boot_dat)
+  coef(fit)
+})
+
+## Estimated SEs
+samp_distn%>%t%>%as.data.frame%>%summarize_all(sd)
+
+
+```
+# The bootstrapped SE's and p values are extremely similar to the robust and original SE's and are slightly smaller on average. THe p values also slightly decreased with the decrease in SE.
+```{r}
+# Going to use sex, hgb, mspike, and age to predict whether the patient is dead.
+
+fit2<-glm(death ~ sex + hgb + mspike + age, data = mgus2, family=binomial(link="logit"))
+summary(fit2)
+
+```
+
+# According to my coefficient estimates, the effect of sex, hgb, and age are significant on odds of the patient being dead. Being male increases your odds of being dead by e^0.652 or almost double the odds, a one unit increase in hemaglobin decreases your odds of being dead by e^0.21, or by 20%, and every year of age increases the patients odds of being dead by e^.074 or by 7%.
+
+```{r}
+mgustest <- mgus2 %>% select(id, death, hgb, mspike, age, sex) %>% na.omit()
+
+mgustest$prob<-predict(fit2,type="response") #get predicted probabilities
+mgustest$predicted<-ifelse(mgustest$prob>.5,1,0) #predicted outcomes
+
+table(truth=mgustest$death, prediction=mgustest$predicted)%>%addmargins
+```
+
+
+# Accuracy = (144+869)/1360, or 0.745. Sensitivity = 869/951 or 0.913 , Specificity = 144/409 or 0.352, PPV = 869/1134 or 0.766. Because the sensitivity is so high and specificity so low I would probably raise the threshold of 0.5 for predicting whether the patient is dead to improve the performance of my model.
+```{r}
+mgustest$logit<-predict(fit2) #get predicted log-odds
+# This wouldn't work.
+# mgustest$outcome<-factor(mgustest$outcome,levels=mgustest$death==1,mgustest$death==0)
+ggplot(mgustest,aes(logit))+geom_density(alpha=.3)+
+  geom_vline(xintercept=0,lty=2)
+
+library(plotROC)
+
+#geom_roc needs actual outcome (0,1) and predicted probability (or predictor if just one) 
+ROCplot<-ggplot(mgustest)+geom_roc(aes(d=death,m=prob), n.cuts=0) 
+
+ROCplot
+calc_auc(ROCplot)
+
+
+```
+
+
+# My AUC calculated on my ROC is 0.764..which isn't great.. This means my test is fair in predicting whether the patient is alive or dead when given the sex, hgb, age, and mspike.
+
+```{R}
+## RUN THE FOLLOWING CODE TO SAVE THE CLASSIFICTION DIAGNOSTICS FUNCTION:
+
+## GIVE IT PREDICTED PROBS AND TRUTH LABELS: IT RETURNS VARIOUS DIAGNOSTICS
+
+class_diag <- function(probs,truth){
+  
+  #CONFUSION MATRIX: CALCULATE ACCURACY, TPR, TNR, PPV
+  tab<-table(factor(probs>.5,levels=c("FALSE","TRUE")),truth)
+  acc=sum(diag(tab))/sum(tab)
+  sens=tab[2,2]/colSums(tab)[2]
+  spec=tab[1,1]/colSums(tab)[1]
+  ppv=tab[2,2]/rowSums(tab)[2]
+
+  if(is.numeric(truth)==FALSE & is.logical(truth)==FALSE) truth<-as.numeric(truth)-1
+  
+  #CALCULATE EXACT AUC
+  ord<-order(probs, decreasing=TRUE)
+  probs <- probs[ord]; truth <- truth[ord]
+  
+  TPR=cumsum(truth)/max(1,sum(truth)) 
+  FPR=cumsum(!truth)/max(1,sum(!truth))
+  
+  dup<-c(probs[-1]>=probs[-length(probs)], FALSE)
+  TPR<-c(0,TPR[!dup],1); FPR<-c(0,FPR[!dup],1)
+  
+  n <- length(TPR)
+  auc<- sum( ((TPR[-1]+TPR[-n])/2) * (FPR[-1]-FPR[-n]) )
+
+  data.frame(acc,sens,spec,ppv,auc)
+}
+```  
+
+
+```{r}
+## k-fold CV
+
+k=10 #choose number of folds
+
+data<-mgustest[sample(nrow(mgustest)),] #randomly order rows
+folds<-cut(seq(1:nrow(mgustest)),breaks=k,labels=F) #create folds
+
+diags<-NULL
+for(i in 1:k){
+  ## Create training and test sets
+  train<-data[folds!=i,] 
+  test<-data[folds==i,]
+  
+  truth<-test$death## Truth labels for fold i
+  
+  ## Train model on training set (all but fold i)
+  fit3 <- glm(death ~ sex + hgb + mspike + age, data = train, family=binomial(link="logit"))
+  
+  ## Test model on test set (fold i) 
+  probs<-predict(fit3,newdata = test,type="response")
+  
+  ## Get diagnostics for fold i
+  diags<-rbind(diags,class_diag(probs,truth))
+}
+
+
+summarize_all(diags,mean) #average diagnostics across all k folds
+``` 
+
+# Out of sample Accuracy = 0.744, Sensitivity 0.915, Recall 0.765, and AUC = 0.764. This shows that we weren't overfitting because these statistics are very similar to the modeling performace on the entire dataset.
+
+```{r}
+
+#Lasso on medical data
+library(glmnet)
+
+mgus2lasso <- na.omit(mgus2)
+y<-as.matrix(mgus2lasso$death) #grab response
+x<-model.matrix(death~.,data=mgus2lasso)[,-1] #grab predictors
+
+
+cv <- cv.glmnet(x,y) #picks an optimal value for lambda through 10-fold CV
+
+lasso<-glmnet(x,y,family="binomial",lambda=cv$lambda.1se)
+coef(lasso)
+
+fit4<-glm(death ~ ., data = mgus2lasso, family=binomial(link="logit"))
+
+mgus2lasso$prob<-predict(fit4,type="response") #get predicted probabilities
+mgus2lasso$predicted<-ifelse(mgus2lasso$prob>.5,1,0) #predicted outcomes
+
+table(truth=mgus2lasso$death, prediction=mgus2lasso$predicted)%>%addmargins
+
+```
+# When running lasso, the variables retained that appear important in predicting whether the patient is still alive are age, date of diagnosis, creatine levels, time with a plasma cell malignancy diagnosis, diagnosis status of pcm, and survival time. Not surprising that the longer survival and diagnosis time are inversely related with the probability of the patient being dead. Also, age and plasma cell malignancy diagnosis increase the odds the patient is dead. The improved prediction using these lasso variables is actually incredible, wow.
+
+
+```{r}
+## k-fold CV
+
+k=10 #choose number of folds
+
+data<-mgus2lasso[sample(nrow(mgus2lasso)),] #randomly order rows
+folds<-cut(seq(1:nrow(mgus2lasso)),breaks=k,labels=F) #create folds
+
+diags<-NULL
+for(i in 1:k){
+  ## Create training and test sets
+  train<-data[folds!=i,] 
+  test<-data[folds==i,]
+  
+  truth<-test$death## Truth labels for fold i
+  
+  ## Train model on training set (all but fold i)
+  fit5 <- glm(death ~ ., data = train, family=binomial(link="logit"))
+  
+  ## Test model on test set (fold i) 
+  probs<-predict(fit5,newdata = test,type="response")
+  
+  ## Get diagnostics for fold i
+  diags<-rbind(diags,class_diag(probs,truth))
+}
+
+
+summarize_all(diags,mean) #average diagnostics across all k folds
+
+```
+# Using the lasso variables, my logistic regression is able to do a MUCH better job on out of sample accuracy, sensitivity, and specificity. It's clear my assumptions on what factors would influence the death of the patient biased my previous models.

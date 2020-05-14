@@ -1,0 +1,527 @@
+---
+title: "Project 2"
+output:
+  pdf_document: default
+  html_document: default
+---
+
+
+
+<pre class="r"><code>library(survival)
+
+# My dataset  = mgus2
+head(mgus2)</code></pre>
+<pre><code>## id age sex dxyr hgb creat mspike ptime pstat futime
+death
+## 1 1 88 F 1981 13.1 1.3 0.5 30 0 30 1
+## 2 2 78 F 1968 11.5 1.2 2.0 25 0 25 1
+## 3 3 94 M 1980 10.5 1.5 2.6 46 0 46 1
+## 4 4 68 M 1977 15.2 1.2 1.2 92 0 92 1
+## 5 5 90 F 1973 10.7 0.8 1.0 8 0 8 1
+## 6 6 90 M 1990 12.9 1.0 0.5 4 0 4 1</code></pre>
+<div id="i-chose-my-dataset-to-be-mgus2-and-i-wish-i-had-found-it-for-project-1.-its-a-history-of-over-1300-patients-with-monoclonal-gammopathy-of-undetermined-significance-mgus.-mgus-commonly-progresses-into-plasma-cell-malignancies-like-multiple-myeloma-which-i-am-researching-ok-so-each-patient-has-an-id-their-age-at-diagnosis-sex-the-year-of-their-diagnosis-dxyr-their-hemoglobin-level-hgb-their-creatine-level-creat-their-monoclonal-serum-spike-mspike-their-time-until-progression-to-plasma-cell-malignancy-in-months-ptime-a-binary-variable-of-if-they-have-progressed-to-plasma-cell-malignancy-pstat-their-time-until-death-futime-and-a-binary-variable-death-on-if-the-patient-has-died-yet-by-the-end-of-data-collection-1999." class="section level1">
+<h1>I chose my dataset to be mgus2 and I wish I had found it for Project 1. It’s a history of over 1,300 patients with monoclonal gammopathy of undetermined significance (MGUS). MGUS commonly progresses into plasma cell malignancies like multiple myeloma which I am researching! Ok so each patient has an ID, their age at diagnosis, sex, the year of their diagnosis, dxyr, their hemoglobin level, hgb, their creatine level, creat, their monoclonal serum spike, mspike, their time until progression to plasma cell malignancy in months, ptime, a binary variable of if they have progressed to plasma cell malignancy, pstat, their time until death, futime, and a binary variable, death, on if the patient has died yet by the end of data collection 1999.</h1>
+<pre class="r"><code>mansex &lt;- manova(cbind(ptime,futime, hgb, mspike)~sex, data=mgus2)
+
+mandeath &lt;- manova(cbind(ptime,futime, hgb, mspike, age)~death, data=mgus2)
+
+manpstat&lt;- manova(cbind(ptime,futime, hgb, mspike, age)~pstat, data=mgus2)
+
+# All manovas are significant. Moving to one way ANOVA&#39;s
+summary(mansex)</code></pre>
+<pre><code>## Df Pillai approx F num Df den Df Pr(&gt;F)
+## sex 1 0.086047 31.893 4 1355 &lt; 2.2e-16 ***
+## Residuals 1358
+## ---
+## Signif. codes: 0 &#39;***&#39; 0.001 &#39;**&#39; 0.01 &#39;*&#39; 0.05 &#39;.&#39; 0.1
+&#39; &#39; 1</code></pre>
+<pre class="r"><code>summary(mandeath)</code></pre>
+<pre><code>## Df Pillai approx F num Df den Df Pr(&gt;F)
+## death 1 0.2764 103.44 5 1354 &lt; 2.2e-16 ***
+## Residuals 1358
+## ---
+## Signif. codes: 0 &#39;***&#39; 0.001 &#39;**&#39; 0.01 &#39;*&#39; 0.05 &#39;.&#39; 0.1
+&#39; &#39; 1</code></pre>
+<pre class="r"><code>summary(manpstat)</code></pre>
+<pre><code>## Df Pillai approx F num Df den Df Pr(&gt;F)
+## pstat 1 0.4124 190.06 5 1354 &lt; 2.2e-16 ***
+## Residuals 1358
+## ---
+## Signif. codes: 0 &#39;***&#39; 0.001 &#39;**&#39; 0.01 &#39;*&#39; 0.05 &#39;.&#39; 0.1
+&#39; &#39; 1</code></pre>
+<pre class="r"><code># Here are my ANOVA&#39;s
+summary.aov(mansex)</code></pre>
+<pre><code>## Response ptime :
+## Df Sum Sq Mean Sq F value Pr(&gt;F)
+## sex 1 46528 46528 9.0297 0.002705 **
+## Residuals 1358 6997499 5153
+## ---
+## Signif. codes: 0 &#39;***&#39; 0.001 &#39;**&#39; 0.01 &#39;*&#39; 0.05 &#39;.&#39; 0.1
+&#39; &#39; 1
+##
+## Response futime :
+## Df Sum Sq Mean Sq F value Pr(&gt;F)
+## sex 1 51123 51123 9.7965 0.001786 **
+## Residuals 1358 7086733 5219
+## ---
+## Signif. codes: 0 &#39;***&#39; 0.001 &#39;**&#39; 0.01 &#39;*&#39; 0.05 &#39;.&#39; 0.1
+&#39; &#39; 1
+##
+## Response hgb :
+## Df Sum Sq Mean Sq F value Pr(&gt;F)
+## sex 1 340.7 340.68 89.571 &lt; 2.2e-16 ***
+## Residuals 1358 5165.0 3.80
+## ---
+## Signif. codes: 0 &#39;***&#39; 0.001 &#39;**&#39; 0.01 &#39;*&#39; 0.05 &#39;.&#39; 0.1
+&#39; &#39; 1
+##
+## Response mspike :
+## Df Sum Sq Mean Sq F value Pr(&gt;F)
+## sex 1 0.27 0.26670 0.8309 0.3622
+## Residuals 1358 435.88 0.32097
+##
+## 24 observations deleted due to missingness</code></pre>
+<pre class="r"><code>summary.aov(mandeath)</code></pre>
+<pre><code>## Response ptime :
+## Df Sum Sq Mean Sq F value Pr(&gt;F)
+## death 1 1556112 1556112 385.06 &lt; 2.2e-16 ***
+## Residuals 1358 5487915 4041
+## ---
+## Signif. codes: 0 &#39;***&#39; 0.001 &#39;**&#39; 0.01 &#39;*&#39; 0.05 &#39;.&#39; 0.1
+&#39; &#39; 1
+##
+## Response futime :
+## Df Sum Sq Mean Sq F value Pr(&gt;F)
+## death 1 1493989 1493989 359.48 &lt; 2.2e-16 ***
+## Residuals 1358 5643868 4156
+## ---
+## Signif. codes: 0 &#39;***&#39; 0.001 &#39;**&#39; 0.01 &#39;*&#39; 0.05 &#39;.&#39; 0.1
+&#39; &#39; 1
+##
+## Response hgb :
+## Df Sum Sq Mean Sq F value Pr(&gt;F)
+## death 1 187.8 187.790 47.955 6.711e-12 ***
+## Residuals 1358 5317.9 3.916
+## ---
+## Signif. codes: 0 &#39;***&#39; 0.001 &#39;**&#39; 0.01 &#39;*&#39; 0.05 &#39;.&#39; 0.1
+&#39; &#39; 1
+##
+## Response mspike :
+## Df Sum Sq Mean Sq F value Pr(&gt;F)
+## death 1 1.32 1.3164 4.1111 0.0428 *
+## Residuals 1358 434.83 0.3202
+## ---
+## Signif. codes: 0 &#39;***&#39; 0.001 &#39;**&#39; 0.01 &#39;*&#39; 0.05 &#39;.&#39; 0.1
+&#39; &#39; 1
+##
+## Response age :
+## Df Sum Sq Mean Sq F value Pr(&gt;F)
+## death 1 29854 29854 236.86 &lt; 2.2e-16 ***
+## Residuals 1358 171164 126
+## ---
+## Signif. codes: 0 &#39;***&#39; 0.001 &#39;**&#39; 0.01 &#39;*&#39; 0.05 &#39;.&#39; 0.1
+&#39; &#39; 1
+##
+## 24 observations deleted due to missingness</code></pre>
+<pre class="r"><code>summary.aov(manpstat)</code></pre>
+<pre><code>## Response ptime :
+## Df Sum Sq Mean Sq F value Pr(&gt;F)
+## pstat 1 1736 1735.7 0.3347 0.563
+## Residuals 1358 7042291 5185.8
+##
+## Response futime :
+## Df Sum Sq Mean Sq F value Pr(&gt;F)
+## pstat 1 56534 56534 10.842 0.001018 **
+## Residuals 1358 7081323 5215
+## ---
+## Signif. codes: 0 &#39;***&#39; 0.001 &#39;**&#39; 0.01 &#39;*&#39; 0.05 &#39;.&#39; 0.1
+&#39; &#39; 1
+##
+## Response hgb :
+## Df Sum Sq Mean Sq F value Pr(&gt;F)
+## pstat 1 0.0 0.0330 0.0081 0.9282
+## Residuals 1358 5505.7 4.0543
+##
+## Response mspike :
+## Df Sum Sq Mean Sq F value Pr(&gt;F)
+## pstat 1 11.73 11.7341 37.546 1.168e-09 ***
+## Residuals 1358 424.41 0.3125
+## ---
+## Signif. codes: 0 &#39;***&#39; 0.001 &#39;**&#39; 0.01 &#39;*&#39; 0.05 &#39;.&#39; 0.1
+&#39; &#39; 1
+##
+## Response age :
+## Df Sum Sq Mean Sq F value Pr(&gt;F)
+## pstat 1 1007 1006.69 6.835 0.009038 **
+## Residuals 1358 200011 147.28
+## ---
+## Signif. codes: 0 &#39;***&#39; 0.001 &#39;**&#39; 0.01 &#39;*&#39; 0.05 &#39;.&#39; 0.1
+&#39; &#39; 1
+##
+## 24 observations deleted due to missingness</code></pre>
+<pre class="r"><code># T tests are superfluous because all of my categorical variables have two categories so one way anova&#39;s already determine which groups are significantly different
+
+# Odds of performing a Type I error
+t1error &lt;- 1 - (0.95^17)
+
+t1error</code></pre>
+<pre><code>## [1] 0.5818797</code></pre>
+</div>
+<div id="i-performed-3-manovas-and-14-anovas.-that-is-17-tests-which-means-if-i-didnt-do-a-correction-the-probability-of-committing-a-type-i-error-would-be-58.18.-therefore-a-bonferroni-correction-for-signifance-leads-to-a-p-value-of-significance-of-.0517-.0029.-this-led-to-a-number-of-relationships-no-longer-being-significant.-but-there-are-signifcant-differences-in-sex-with-respect-to-ptime-futime-and-hgb.-there-were-significant-differences-in-ptime-futime-hgb-and-age-with-those-patients-that-were-still-alive-in-comparison-to-the-deceased.-last-there-were-significant-differences-in-mspike-and-futime-with-patients-that-had-been-diagnosed-with-a-pcm-versus-those-who-hadnt." class="section level1">
+<h1>I performed 3 MANOVA’s and 14 ANOVA’s. That is 17 tests! Which means if I didn’t do a correction the probability of committing a type I error would be 58.18%. Therefore, a Bonferroni correction for signifance leads to a p value of significance of .05/17 = .0029. This led to a number of relationships no longer being significant. But there are signifcant differences in sex with respect to ptime, futime, and hgb. There were significant differences in ptime, futime, hgb, and age with those patients that were still alive in comparison to the deceased. Last there were significant differences in mspike and futime with patients that had been diagnosed with a PCM versus those who hadn’t.</h1>
+<pre class="r"><code>library(mvtnorm); library(ggExtra)
+
+ggplot(mgus2, aes(x = hgb, y = mspike)) +
+geom_point(alpha = .5) + geom_density_2d(h=2) + coord_fixed() + facet_wrap(~sex)</code></pre>
+<p><img src="/Project2_files/figure-html/unnamed-chunk-3-1.png" width="768" style="display: block; margin: auto;" /></p>
+<pre class="r"><code>ggplot(mgus2, aes(x = ptime, y = futime)) +
+geom_point(alpha = .5) + geom_density_2d(h=2) + coord_fixed() + facet_wrap(~sex)</code></pre>
+<p><img src="/Project2_files/figure-html/unnamed-chunk-3-2.png" width="768" style="display: block; margin: auto;" /></p>
+<pre class="r"><code># This doesn&#39;t look normal
+ggplot(mgus2, aes(x = ptime, y = age)) +
+geom_point(alpha = .5) + geom_density_2d(h=2) + coord_fixed() + facet_wrap(~sex)</code></pre>
+<p><img src="/Project2_files/figure-html/unnamed-chunk-3-3.png" width="768" style="display: block; margin: auto;" /></p>
+<pre class="r"><code>hist(mgus2$futime)</code></pre>
+<p><img src="/Project2_files/figure-html/unnamed-chunk-3-4.png" width="768" style="display: block; margin: auto;" /></p>
+<pre class="r"><code>hist(mgus2$hgb)</code></pre>
+<p><img src="/Project2_files/figure-html/unnamed-chunk-3-5.png" width="768" style="display: block; margin: auto;" /></p>
+<p>#MANOVA assumptions: random samples: patient data is from clinical centers that were participating in data collection, so not completely random from total pool of MGUS patients. Independent observations: Yes. Multivariate normality of DV’s. When plotting the combos of two variables against each other most look normal, but not all. When comparing the covariances of the categorical variable pstat, they look approximately similar, could be better.There does not appear to be any wild outliers. The multicolinearity is probably violated because some medical dependent variables like mspike and ptime is probably very correlated. Most ANOVA assumptions are the same as MANOVA’s. Independent observations: yes. Random samples: about as best we can do. Most variables are normally distributed with ptime and futime being right skewed.</p>
+<pre class="r"><code># Calculate test statisitic
+diff_survival_time &lt;- mgus2%&gt;%group_by(sex)%&gt;% summarize(means=mean(futime))%&gt;%summarize(diff(means))
+diff_survival_time</code></pre>
+<pre><code>## # A tibble: 1 x 1
+##   `diff(means)`
+##           &lt;dbl&gt;
+## 1         -13.2</code></pre>
+<pre class="r"><code># Create a null sampling distribution
+rand_dist&lt;-vector()
+for(i in 1:5000){
+new&lt;-data.frame(futime=sample(mgus2$futime),sex=mgus2$sex)
+rand_dist[i]&lt;-mean(new[new$sex==&quot;M&quot;,]$futime)-
+mean(new[new$sex==&quot;F&quot;,]$futime)}
+
+hist(rand_dist)
+abline(v=diff_survival_time, col=&quot;red&quot;)</code></pre>
+<p><img src="/Project2_files/figure-html/unnamed-chunk-4-1.png" width="768" style="display: block; margin: auto;" /></p>
+<pre class="r"><code>p_value &lt;- mean(rand_dist&gt; 13.19085 | rand_dist&lt; -13.19085)
+p_value</code></pre>
+<pre><code>## [1] 8e-04</code></pre>
+</div>
+<div id="null-hypothesis-ho-there-is-no-difference-in-survival-time-between-men-and-women-diagnosed-with-mgus.-alternative-hypothesis-ha-there-is-a-significant-difference-in-survival-time-between-men-and-women-diagnosed-with-mgus.-the-probability-of-us-obtaining-a-mean-difference-of-that-magnitude-between-sexs-by-chance-is-6-10-4-given-our-sampling-distribution-meaning-we-reject-the-null-hypothesis-and-conclude-that-women-live-significantly-longer-than-men-with-mgus." class="section level1">
+<h1>Null hypothesis Ho = There is no difference in survival time between men and women diagnosed with MGUS. Alternative hypothesis Ha = There is a significant difference in survival time between men and women diagnosed with MGUS. The probability of us obtaining a mean difference of that magnitude between sexs by chance is 6 * 10^-4 given our sampling distribution meaning we reject the null hypothesis and conclude that women live significantly longer than men with MGUS.</h1>
+<pre class="r"><code>#Center the variables, creating a centered dataset
+cmgus2 &lt;- mgus2
+
+cmgus2$age &lt;- mgus2$age - mean(mgus2$age)
+cmgus2$hgb &lt;- mgus2$hgb - mean(mgus2$hgb, na.rm = T)
+cmgus2$futime &lt;- mgus2$futime - mean(mgus2$futime, na.rm = T )
+cmgus2$ptime &lt;- mgus2$ptime - mean(mgus2$ptime, na.rm = T)
+cmgus2$creat &lt;- mgus2$creat - mean(mgus2$creat, na.rm = T)
+cmgus2$mspike &lt;- mgus2$mspike - mean(mgus2$mspike, na.rm = T)
+
+# Building a linear regression model predicting whether the patient has died based on age, hemoglobin levels, mspike, and pstat
+fit &lt;- lm(futime~age * hgb * mspike, data = cmgus2)
+summary(fit)</code></pre>
+<pre><code>##
+## Call:
+## lm(formula = futime ~ age * hgb * mspike, data = cmgus2)
+##
+## Residuals:
+## Min 1Q Median 3Q Max
+## -177.109 -44.838 -7.604 40.973 286.149
+##
+## Coefficients:
+## Estimate Std. Error t value Pr(&gt;|t|)
+## (Intercept) -0.54916 1.74720 -0.314 0.75334
+## age -2.33675 0.14461 -16.160 &lt; 2e-16 ***
+## hgb 6.29457 0.87444 7.198 1.01e-12 ***
+## mspike 9.93708 3.13318 3.172 0.00155 **
+## age:hgb -0.20535 0.06759 -3.038 0.00243 **
+## age:mspike -1.65705 0.26233 -6.317 3.62e-10 ***
+## hgb:mspike -0.73146 1.49749 -0.488 0.62530
+## age:hgb:mspike -0.09232 0.10987 -0.840 0.40092
+## ---
+## Signif. codes: 0 &#39;***&#39; 0.001 &#39;**&#39; 0.01 &#39;*&#39; 0.05 &#39;.&#39; 0.1
+&#39; &#39; 1
+##
+## Residual standard error: 63.25 on 1352 degrees of
+freedom
+## (24 observations deleted due to missingness)
+## Multiple R-squared: 0.2422, Adjusted R-squared: 0.2383
+## F-statistic: 61.74 on 7 and 1352 DF, p-value: &lt; 2.2e-16</code></pre>
+<pre class="r"><code>new1&lt;-cmgus2
+new1$hgb_c&lt;-mean(mgus2$hgb)
+new1$mean&lt;-predict(fit,new1)
+new1$hgb_c&lt;-mean(mgus2$hgb)+sd(mgus2$hgb)
+new1$plus.sd&lt;-predict(fit,new1)
+new1$hgb_c&lt;-mean(mgus2$hgb)-sd(mgus2$hgb)
+new1$minus.sd&lt;-predict(fit,new1)
+newint&lt;-new1%&gt;%select(futime,age,mean,plus.sd,minus.sd)%&gt;%gather(hgb,value,-futime,-age)
+
+mycols&lt;-c(&quot;#619CFF&quot;,&quot;#F8766D&quot;,&quot;#00BA38&quot;)
+names(mycols)&lt;-c(&quot;-1 sd&quot;,&quot;mean&quot;,&quot;+1 sd&quot;)
+mycols=as.factor(mycols)
+
+ggplot(cmgus2,aes(age,futime),group=mycols)+geom_point()+geom_line(data=new1,aes(y=mean,color=&quot;mean&quot;))+geom_line(data=new1,aes(y=plus.sd,color=&quot;+1 sd&quot;))+geom_line(data=new1,aes(y=minus.sd,color=&quot;-1 sd&quot;))+scale_color_manual(values=mycols)+labs(color=&quot;hgb (cont)&quot;)+theme(legend.position=c(.9,.2))</code></pre>
+<p><img src="/Project2_files/figure-html/unnamed-chunk-5-1.png" width="768" style="display: block; margin: auto;" /></p>
+</div>
+<div id="interpretation-of-coefficients-a-one-unit-increase-in-hemaglobin-predicts-an-increase-in-survival-time-of-6.29-months-a-one-year-increase-in-the-age-of-the-patient-predicts-a-2.33-month-decrease-of-survival-time-and-a-one-unit-increase-of-mspike-predicts-an-increase-of-9.93-months-of-survival-surprisingly." class="section level1">
+<h1>Interpretation of coefficients: A one unit increase in hemaglobin predicts an increase in survival time of 6.29 months, a one year increase in the age of the patient predicts a 2.33 month decrease of survival time, and a one unit increase of mspike predicts an increase of 9.93 months of survival surprisingly.</h1>
+<pre class="r"><code>library(lmtest)
+library(sandwich)
+# Taken from WS15
+resids&lt;-fit$residuals; fitvals&lt;-fit$fitted.values
+ggplot()+geom_point(aes(fitvals,resids))+geom_hline(yintercept=0, col=&quot;red&quot;)</code></pre>
+<p><img src="/Project2_files/figure-html/unnamed-chunk-6-1.png" width="768" style="display: block; margin: auto;" /></p>
+<pre class="r"><code>bptest(fit)</code></pre>
+<pre><code>## 
+##  studentized Breusch-Pagan test
+## 
+## data:  fit
+## BP = 98.107, df = 7, p-value &lt; 2.2e-16</code></pre>
+<pre class="r"><code>ggplot()+geom_histogram(aes(resids),bins=20)</code></pre>
+<p><img src="/Project2_files/figure-html/unnamed-chunk-6-2.png" width="768" style="display: block; margin: auto;" /></p>
+<pre class="r"><code>ggplot()+geom_qq(aes(sample=resids))+geom_qq_line(aes(sample=resids), color=&#39;red&#39;)</code></pre>
+<p><img src="/Project2_files/figure-html/unnamed-chunk-6-3.png" width="768" style="display: block; margin: auto;" /></p>
+<pre class="r"><code>coeftest(fit, vcov=vcovHC(fit))[,1:4] ## Robust SEs</code></pre>
+<pre><code>## Estimate Std. Error t value Pr(&gt;|t|)
+## (Intercept) -0.54915854 1.77906899 -0.3086775
+7.576144e-01
+## age -2.33674646 0.15594353 -14.9845681 4.465218e-47
+## hgb 6.29456537 0.88655086 7.1000612 2.008608e-12
+## mspike 9.93708114 3.05618720 3.2514635 1.176428e-03
+## age:hgb -0.20535403 0.06898595 -2.9767516 2.965012e-03
+## age:mspike -1.65705438 0.25805523 -6.4213167
+1.866099e-10
+## hgb:mspike -0.73146144 1.46713561 -0.4985643
+6.181675e-01
+## age:hgb:mspike -0.09231721 0.10097931 -0.9142191
+3.607648e-01</code></pre>
+</div>
+<div id="normality-assumption-looks-to-be-met-by-histogram-but-further-check-by-qqplot-shows-skewing.-linearity-assumption-looks-to-be-met.-homoskedasticity-assumption-definitely-fails-and-bptest-confirms.-when-using-robust-standard-errors-to-negate-heteroskedasticity-my-p-values-did-not-change-very-much-and-all-three-remained-very-significantly-associated-with-survival-time.-my-model-explains-23.83-of-the-variation-of-the-data." class="section level1">
+<h1>Normality assumption looks to be met by histogram, but further check by qqplot shows skewing. Linearity assumption looks to be met. Homoskedasticity assumption definitely fails and bptest confirms. When using robust standard errors to negate heteroskedasticity, my p values did not change very much and all three remained very significantly associated with survival time. My model explains 23.83% of the variation of the data.</h1>
+<pre class="r"><code># Building a linear regression model predicting whether the patient has died based on age, hemoglobin levels, mspike, and pstat
+fit &lt;- lm(futime~age * hgb * mspike, data = cmgus2)
+
+# here&#39;s a way to sample people/rows from your dataset with replacement
+boot_dat&lt;-cmgus2[sample(nrow(cmgus2),replace=TRUE),]
+
+
+samp_distn&lt;-replicate(5000, {
+  boot_dat&lt;-boot_dat&lt;-cmgus2[sample(nrow(cmgus2),replace=TRUE),]
+  fit&lt;-lm(futime~age * mspike * hgb, data=boot_dat)
+  coef(fit)
+})
+
+## Estimated SEs
+samp_distn%&gt;%t%&gt;%as.data.frame%&gt;%summarize_all(sd)</code></pre>
+<pre><code>## (Intercept) age mspike hgb age:mspike age:hgb mspike:hgb
+age:mspike:hgb
+## 1 1.74189 0.1556474 3.051019 0.8677785 0.2626638
+0.06866794 1.433663 0.1002255</code></pre>
+</div>
+<div id="the-bootstrapped-ses-and-p-values-are-extremely-similar-to-the-robust-and-original-ses-and-are-slightly-smaller-on-average.-the-p-values-also-slightly-decreased-with-the-decrease-in-se." class="section level1">
+<h1>The bootstrapped SE’s and p values are extremely similar to the robust and original SE’s and are slightly smaller on average. THe p values also slightly decreased with the decrease in SE.</h1>
+<pre class="r"><code># Going to use sex, hgb, mspike, and age to predict whether the patient is dead.
+
+fit2&lt;-glm(death ~ sex + hgb + mspike + age, data = mgus2, family=binomial(link=&quot;logit&quot;))
+summary(fit2)</code></pre>
+<pre><code>##
+## Call:
+## glm(formula = death ~ sex + hgb + mspike + age, family =
+binomial(link = &quot;logit&quot;),
+## data = mgus2)
+##
+## Deviance Residuals:
+## Min 1Q Median 3Q Max
+## -2.6468 -0.9378 0.5299 0.7954 2.2927
+##
+## Coefficients:
+## Estimate Std. Error z value Pr(&gt;|z|)
+## (Intercept) -2.015299 0.662136 -3.044 0.00234 **
+## sexM 0.652485 0.138814 4.700 2.60e-06 ***
+## hgb -0.214659 0.036872 -5.822 5.82e-09 ***
+## mspike 0.263692 0.119464 2.207 0.02729 *
+## age 0.074256 0.006004 12.368 &lt; 2e-16 ***
+## ---
+## Signif. codes: 0 &#39;***&#39; 0.001 &#39;**&#39; 0.01 &#39;*&#39; 0.05 &#39;.&#39; 0.1
+&#39; &#39; 1
+##
+## (Dispersion parameter for binomial family taken to be 1)
+##
+## Null deviance: 1663.2 on 1359 degrees of freedom
+## Residual deviance: 1406.3 on 1355 degrees of freedom
+## (24 observations deleted due to missingness)
+## AIC: 1416.3
+##
+## Number of Fisher Scoring iterations: 4</code></pre>
+</div>
+<div id="according-to-my-coefficient-estimates-the-effect-of-sex-hgb-and-age-are-significant-on-odds-of-the-patient-being-dead.-being-male-increases-your-odds-of-being-dead-by-e0.652-or-almost-double-the-odds-a-one-unit-increase-in-hemaglobin-decreases-your-odds-of-being-dead-by-e0.21-or-by-20-and-every-year-of-age-increases-the-patients-odds-of-being-dead-by-e.074-or-by-7." class="section level1">
+<h1>According to my coefficient estimates, the effect of sex, hgb, and age are significant on odds of the patient being dead. Being male increases your odds of being dead by e^0.652 or almost double the odds, a one unit increase in hemaglobin decreases your odds of being dead by e^0.21, or by 20%, and every year of age increases the patients odds of being dead by e^.074 or by 7%.</h1>
+<pre class="r"><code>mgustest &lt;- mgus2 %&gt;% select(id, death, hgb, mspike, age, sex) %&gt;% na.omit()
+
+mgustest$prob&lt;-predict(fit2,type=&quot;response&quot;) #get predicted probabilities
+mgustest$predicted&lt;-ifelse(mgustest$prob&gt;.5,1,0) #predicted outcomes
+
+table(truth=mgustest$death, prediction=mgustest$predicted)%&gt;%addmargins</code></pre>
+<pre><code>##      prediction
+## truth    0    1  Sum
+##   0    144  265  409
+##   1     82  869  951
+##   Sum  226 1134 1360</code></pre>
+</div>
+<div id="accuracy-1448691360-or-0.745.-sensitivity-869951-or-0.913-specificity-144409-or-0.352-ppv-8691134-or-0.766.-because-the-sensitivity-is-so-high-and-specificity-so-low-i-would-probably-raise-the-threshold-of-0.5-for-predicting-whether-the-patient-is-dead-to-improve-the-performance-of-my-model." class="section level1">
+<h1>Accuracy = (144+869)/1360, or 0.745. Sensitivity = 869/951 or 0.913 , Specificity = 144/409 or 0.352, PPV = 869/1134 or 0.766. Because the sensitivity is so high and specificity so low I would probably raise the threshold of 0.5 for predicting whether the patient is dead to improve the performance of my model.</h1>
+<pre class="r"><code>mgustest$logit&lt;-predict(fit2) #get predicted log-odds
+# This wouldn&#39;t work.
+# mgustest$outcome&lt;-factor(mgustest$outcome,levels=mgustest$death==1,mgustest$death==0)
+ggplot(mgustest,aes(logit))+geom_density(alpha=.3)+
+  geom_vline(xintercept=0,lty=2)</code></pre>
+<p><img src="/Project2_files/figure-html/unnamed-chunk-10-1.png" width="768" style="display: block; margin: auto;" /></p>
+<pre class="r"><code>library(plotROC)
+
+#geom_roc needs actual outcome (0,1) and predicted probability (or predictor if just one) 
+ROCplot&lt;-ggplot(mgustest)+geom_roc(aes(d=death,m=prob), n.cuts=0) 
+
+ROCplot</code></pre>
+<p><img src="/Project2_files/figure-html/unnamed-chunk-10-2.png" width="768" style="display: block; margin: auto;" /></p>
+<pre class="r"><code>calc_auc(ROCplot)</code></pre>
+<pre><code>##   PANEL group       AUC
+## 1     1    -1 0.7647837</code></pre>
+</div>
+<div id="my-auc-calculated-on-my-roc-is-0.764..which-isnt-great..-this-means-my-test-is-fair-in-predicting-whether-the-patient-is-alive-or-dead-when-given-the-sex-hgb-age-and-mspike." class="section level1">
+<h1>My AUC calculated on my ROC is 0.764..which isn’t great.. This means my test is fair in predicting whether the patient is alive or dead when given the sex, hgb, age, and mspike.</h1>
+<pre class="r"><code>## RUN THE FOLLOWING CODE TO SAVE THE CLASSIFICTION DIAGNOSTICS FUNCTION:
+
+## GIVE IT PREDICTED PROBS AND TRUTH LABELS: IT RETURNS VARIOUS DIAGNOSTICS
+
+class_diag &lt;- function(probs,truth){
+  
+  #CONFUSION MATRIX: CALCULATE ACCURACY, TPR, TNR, PPV
+  tab&lt;-table(factor(probs&gt;.5,levels=c(&quot;FALSE&quot;,&quot;TRUE&quot;)),truth)
+  acc=sum(diag(tab))/sum(tab)
+  sens=tab[2,2]/colSums(tab)[2]
+  spec=tab[1,1]/colSums(tab)[1]
+  ppv=tab[2,2]/rowSums(tab)[2]
+
+  if(is.numeric(truth)==FALSE &amp; is.logical(truth)==FALSE) truth&lt;-as.numeric(truth)-1
+  
+  #CALCULATE EXACT AUC
+  ord&lt;-order(probs, decreasing=TRUE)
+  probs &lt;- probs[ord]; truth &lt;- truth[ord]
+  
+  TPR=cumsum(truth)/max(1,sum(truth)) 
+  FPR=cumsum(!truth)/max(1,sum(!truth))
+  
+  dup&lt;-c(probs[-1]&gt;=probs[-length(probs)], FALSE)
+  TPR&lt;-c(0,TPR[!dup],1); FPR&lt;-c(0,FPR[!dup],1)
+  
+  n &lt;- length(TPR)
+  auc&lt;- sum( ((TPR[-1]+TPR[-n])/2) * (FPR[-1]-FPR[-n]) )
+
+  data.frame(acc,sens,spec,ppv,auc)
+}</code></pre>
+<pre class="r"><code>## k-fold CV
+
+k=10 #choose number of folds
+
+data&lt;-mgustest[sample(nrow(mgustest)),] #randomly order rows
+folds&lt;-cut(seq(1:nrow(mgustest)),breaks=k,labels=F) #create folds
+
+diags&lt;-NULL
+for(i in 1:k){
+  ## Create training and test sets
+  train&lt;-data[folds!=i,] 
+  test&lt;-data[folds==i,]
+  
+  truth&lt;-test$death## Truth labels for fold i
+  
+  ## Train model on training set (all but fold i)
+  fit3 &lt;- glm(death ~ sex + hgb + mspike + age, data = train, family=binomial(link=&quot;logit&quot;))
+  
+  ## Test model on test set (fold i) 
+  probs&lt;-predict(fit3,newdata = test,type=&quot;response&quot;)
+  
+  ## Get diagnostics for fold i
+  diags&lt;-rbind(diags,class_diag(probs,truth))
+}
+
+
+summarize_all(diags,mean) #average diagnostics across all k folds</code></pre>
+<pre><code>##         acc      sens      spec       ppv       auc
+## 1 0.7419118 0.9151812 0.3409932 0.7632707 0.7636546</code></pre>
+</div>
+<div id="out-of-sample-accuracy-0.744-sensitivity-0.915-recall-0.765-and-auc-0.764.-this-shows-that-we-werent-overfitting-because-these-statistics-are-very-similar-to-the-modeling-performace-on-the-entire-dataset." class="section level1">
+<h1>Out of sample Accuracy = 0.744, Sensitivity 0.915, Recall 0.765, and AUC = 0.764. This shows that we weren’t overfitting because these statistics are very similar to the modeling performace on the entire dataset.</h1>
+<pre class="r"><code>#Lasso on medical data
+library(glmnet)
+
+mgus2lasso &lt;- na.omit(mgus2)
+y&lt;-as.matrix(mgus2lasso$death) #grab response
+x&lt;-model.matrix(death~.,data=mgus2lasso)[,-1] #grab predictors
+
+
+cv &lt;- cv.glmnet(x,y) #picks an optimal value for lambda through 10-fold CV
+
+lasso&lt;-glmnet(x,y,family=&quot;binomial&quot;,lambda=cv$lambda.1se)
+coef(lasso)</code></pre>
+<pre><code>## 11 x 1 sparse Matrix of class &quot;dgCMatrix&quot;
+##                        s0
+## (Intercept) 702.350462399
+## id            .          
+## age           0.034590132
+## sexM          .          
+## dxyr         -0.352847661
+## hgb           .          
+## creat         0.005909273
+## mspike        .          
+## ptime        -0.019693447
+## pstat         0.194014365
+## futime       -0.011047069</code></pre>
+<pre class="r"><code>fit4&lt;-glm(death ~ ., data = mgus2lasso, family=binomial(link=&quot;logit&quot;))
+
+mgus2lasso$prob&lt;-predict(fit4,type=&quot;response&quot;) #get predicted probabilities
+mgus2lasso$predicted&lt;-ifelse(mgus2lasso$prob&gt;.5,1,0) #predicted outcomes
+
+table(truth=mgus2lasso$death, prediction=mgus2lasso$predicted)%&gt;%addmargins</code></pre>
+<pre><code>##      prediction
+## truth    0    1  Sum
+##   0    375   25  400
+##   1     50  888  938
+##   Sum  425  913 1338</code></pre>
+</div>
+<div id="when-running-lasso-the-variables-retained-that-appear-important-in-predicting-whether-the-patient-is-still-alive-are-age-date-of-diagnosis-creatine-levels-time-with-a-plasma-cell-malignancy-diagnosis-diagnosis-status-of-pcm-and-survival-time.-not-surprising-that-the-longer-survival-and-diagnosis-time-are-inversely-related-with-the-probability-of-the-patient-being-dead.-also-age-and-plasma-cell-malignancy-diagnosis-increase-the-odds-the-patient-is-dead.-the-improved-prediction-using-these-lasso-variables-is-actually-incredible-wow." class="section level1">
+<h1>When running lasso, the variables retained that appear important in predicting whether the patient is still alive are age, date of diagnosis, creatine levels, time with a plasma cell malignancy diagnosis, diagnosis status of pcm, and survival time. Not surprising that the longer survival and diagnosis time are inversely related with the probability of the patient being dead. Also, age and plasma cell malignancy diagnosis increase the odds the patient is dead. The improved prediction using these lasso variables is actually incredible, wow.</h1>
+<pre class="r"><code>## k-fold CV
+
+k=10 #choose number of folds
+
+data&lt;-mgus2lasso[sample(nrow(mgus2lasso)),] #randomly order rows
+folds&lt;-cut(seq(1:nrow(mgus2lasso)),breaks=k,labels=F) #create folds
+
+diags&lt;-NULL
+for(i in 1:k){
+  ## Create training and test sets
+  train&lt;-data[folds!=i,] 
+  test&lt;-data[folds==i,]
+  
+  truth&lt;-test$death## Truth labels for fold i
+  
+  ## Train model on training set (all but fold i)
+  fit5 &lt;- glm(death ~ ., data = train, family=binomial(link=&quot;logit&quot;))
+  
+  ## Test model on test set (fold i) 
+  probs&lt;-predict(fit5,newdata = test,type=&quot;response&quot;)
+  
+  ## Get diagnostics for fold i
+  diags&lt;-rbind(diags,class_diag(probs,truth))
+}
+
+
+summarize_all(diags,mean) #average diagnostics across all k folds</code></pre>
+<pre><code>##         acc     sens    spec       ppv       auc
+## 1 0.9409494 0.948902 0.92385 0.9663201 0.9774214</code></pre>
+</div>
+<div id="using-the-lasso-variables-my-logistic-regression-is-able-to-do-a-much-better-job-on-out-of-sample-accuracy-sensitivity-and-specificity.-its-clear-my-assumptions-on-what-factors-would-influence-the-death-of-the-patient-biased-my-previous-models." class="section level1">
+<h1>Using the lasso variables, my logistic regression is able to do a MUCH better job on out of sample accuracy, sensitivity, and specificity. It’s clear my assumptions on what factors would influence the death of the patient biased my previous models.</h1>
+</div>

@@ -1,0 +1,182 @@
+---
+title: "Project1"
+output:
+  pdf_document: default
+  word_document: default
+  html_document: default
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## R Markdown
+
+This is an R Markdown document. Markdown is a simple formatting syntax for authoring HTML, PDF, and MS Word documents. For more details on using R Markdown see <http://rmarkdown.rstudio.com>.
+
+When you click the **Knit** button a document will be generated that includes both content as well as the output of any embedded R code chunks within the document. You can embed an R code chunk like this:
+
+```{r}
+library(tidyr)
+library(survival)
+library(MASS)
+library(dplyr)
+library(ggplot2)
+library(tibble)
+library(cluster)
+
+leuk <- read.csv(file = "leuk.csv")
+myeloid <- read.csv(file = "myeloid.csv")
+
+```
+
+# Introduction: I chose datasets leuk and myeloid because they are two datasets on leukemia. Myeloid contains info on two different treatments, time to death, complete response, and relapse. Meanwhile dataset leuk is a much smaller dataset, but contains important biological information like white blood cell count, and whether the malignancy remains. I want to combine the two because they both contain survival time, but I want the breadth of info of myeloid and the biological info of leuk. I want to see associations with treatment, white blood cell count and survival time. This is interesting to me because I'm a grad student in immunology focusing on cancer immunotherapies.
+
+```{r}
+#Reformatting the common variable so all survival times are in days
+#Used dplyr functions mutate and select
+
+leuk <-leuk%>%mutate(time_days = time * 7)
+leuk <-leuk%>%select(-time)
+
+``` 
+
+# Both my datasets were tidy and I honestly couldn't figure out how to pivot them wider or any applications to pivoting them to be wider
+
+```{r}
+# There has to be an easier way to do this, but I changed the 
+# ag variable into a response column of type integer
+test2 <- leuk$ag
+test2 <- as.integer(test2)
+test2 <- test2 - 1
+leuk <- leuk %>% mutate(response = test2)
+leuk <- leuk %>% select(-ag)
+leuk$response <- as.integer(leuk$response)
+
+```
+
+
+# I chose full join on survival time in days because each row is a single patient and I want all the patient data. In this way, I don't lose any cases. I want to draw a correlation between wbc and response of dataset leuk and then apply it to the survival time of dataset myeloid because myeloid is the larger dataset by far, but does not contain white blood cell count data. 
+
+```{r}
+combo <- full_join(myeloid, leuk, by= c("futime" = "time_days"))
+combo <- combo %>% select(-X.x, -X.y)
+```
+
+# 1) I want to see an association with treatment and survival time. It appears treatment B leads to a longer survival time. It also appears the patients from dataset leuk had more advanced stages of cancer
+```{r}
+trtsurv <- combo %>% group_by(trt) %>% summarize(mean(futime))
+trtsurv
+```
+
+# 2) Not surprisingly the patients that responded from dataset leuk had a higher survival time
+```{r}
+responsesurv <- combo %>% group_by(response) %>% summarize(mean(futime))
+responsesurv
+```
+
+# 3) But that previous summary included patients from myeloid that didn't have response info so I used dplyr function filter.
+```{r}
+responsesurv2 <- combo %>% filter(!is.na(combo$response)) %>% group_by(response) %>% summarize(mean(futime))
+responsesurv2
+```
+#4) See the difference in average wbc count between high and low category wbc count patients
+```{r}
+# Create a categorical variable
+combo2 <- combo %>% filter(!is.na(combo$wbc)) %>% mutate(wbc_category = ifelse(wbc > mean(wbc), "High", "Low"))
+
+wbclevel <- combo2 %>% filter(!is.na(combo2$wbc)) %>% group_by(wbc_category) %>% summarize(mean(wbc))
+wbclevel
+```
+
+# 5) See the proportion of high and low wbc patients still show signs of disease
+# This was surprising that the patients with higher wbc count showed higher rates of recovery of leukemia. Hmm...
+```{r}
+response2wbc <- combo2 %>% filter(!is.na(combo2$wbc)) %>% group_by(wbc_category) %>% summarize(mean(response))
+response2wbc
+```
+#6) Now this makes more sense. The patients with 'low' wbc counts had longer average survival times. High wbc counts show the malignant white blood cells are still present.
+```{r}
+surv2wbc <- combo2 %>% filter(!is.na(combo2$wbc)) %>% group_by(wbc_category) %>% summarize(mean(futime))
+surv2wbc
+```
+# 7) I thought this was interesting. Those that received hematapoetic stem cell treatment had a higher average survival time. But those that received the treatment probably weren't responding to other forms of treatment which shows the efficacy of hematapoetic stem cell treatment
+
+```{r}
+hemtrt <- combo %>% filter(!is.na(combo$txtime)) %>% summarize(mean(futime))
+nonhemtrt <-combo %>% filter(is.na(combo$txtime)) %>% summarize(mean(futime)) 
+
+hemtrt
+nonhemtrt
+```
+# 8) Not surprising those that were deemed to completely respond to treatment had over twice the average survival time than those who didn't.
+```{r}
+crtime <- combo %>% filter(!is.na(combo$crtime)) %>% summarize(mean(futime))
+nocrtime <- combo %>%filter(is.na(combo$crtime)) %>% summarize(mean(futime))
+
+crtime
+nocrtime
+
+```
+# 9) Just to use the arrange dplyr function 
+```{r}
+combo %>% arrange(desc(combo$futime)) %>% top_n(5)
+```
+# 10) Correlation matrices. Many of these relationships were explored above
+```{r}
+numcomboleuk <- combo %>% select(futime, wbc, response) %>% na.omit()
+corleuk <- cor(numcomboleuk)
+
+numcombomyeloid <- combo %>% select(futime, death, rltime, crtime) %>% na.omit()
+cormyeloid <- cor(numcombomyeloid)
+
+corleuk
+cormyeloid
+```
+
+```{r}
+# Visualization, coopted from a previous worksheet, creating a heatmap of correlations
+corheat1 <-cor(numcomboleuk)%>%as.data.frame%>%
+  rownames_to_column%>%
+  pivot_longer(-1,names_to="name",values_to="correlation")
+
+corheat2 <-cor(numcombomyeloid)%>%as.data.frame%>%
+  rownames_to_column%>%
+  pivot_longer(-1,names_to="name",values_to="correlation")
+
+
+
+corheat1 %>%ggplot(aes(rowname,name,fill=correlation))+
+  geom_tile()
+
+corheat2 %>%ggplot(aes(rowname,name,fill=correlation))+
+  geom_tile()
+
+```
+# While both treatments had patients that didn't respond and had a low survival time, it's clear from the first graph that there were more patients in Treatment B that had a longer survival time who haven't relapsed or relapsed later in treatment. Meanwhile Treatment A had a few patients that had a long survival time, but most had relapsed immediately and probably changed treatments as seen by a high rltime in combination with a high futime. Graph two shows that wbc is a good prognosis for the course of the leukemia as a high wbc count indicates the malignancy is advanced and aggressive and as a result had a significantly lower survival time.
+
+```{r}
+
+
+combo %>% select(futime, death, rltime, trt) %>% na.omit() %>% ggplot(aes(futime, rltime)) + geom_point(size= 2, aes(color=trt)) + scale_x_continuous(breaks=c(0 ,200, 400, 600, 800, 1000, 1200, 1400, 1600, 1800, 2000, 2200, 2400)) + ggtitle("Relapse and survival time by treatment regimen dot plot")
+
+
+combo2 %>% select(futime, wbc_category, response)  %>% na.omit() %>% ggplot(aes(x=wbc_category, y=futime)) + geom_bar(stat= "summary", color="gold2", fill="royalblue1") + geom_errorbar(stat="summary", size=0.5) + ggtitle("Average survival time based on wbc level")
+
+
+```
+# Graph 1: Changed the default point size, three aes elements, added tick marks, and a title. Graph 2: Wanted to show a different type of graph and relate wbc count to average survival time. Used stat="summary", added a title, and did a bar plot. Also changed the default colors
+
+```{r}
+
+library(cluster)
+pam1 <- combo %>% select(futime, rltime, wbc, txtime, trt) %>% pam(k = 4)
+
+pamclust <- combo %>% mutate(cluster = as.factor(pam1$clustering))
+pamclust %>% ggplot(aes(futime, rltime, color = cluster)) + geom_point()
+
+
+pamclust %>% group_by(cluster) %>% summarize_if(is.numeric, mean, na.rm = T)
+```
+# By using clustering I was finally able to get to some of the connections I was looking for. Cluster 1 had the highest wbc count, those patients were lumped in the same cluster as those who had the lowest survival time, time to relapse, and percent who had died from dataset myeloid. Cluster 2 had the longest survival time and is made up of patients that mainly responded to treatment B and had the longest time to relapse. Cluster 3 was those patients with lower wbc count. Again they had lower survival time than clusters 2 and 4 who were made up of patients from dataset myeloid. As noted earlier, dataset leuk probably is on patients with a more advanced stage of leukemia than dataset myeloid by the significant difference in survival time. Cluster 4 were those patients with extremely low wbc counts and those that responded to treatment A and had the second lowest rate of death and second best survival time.
+
