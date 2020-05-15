@@ -44,8 +44,6 @@
         
         <li><a href="/projects/">PROJECTS</a></li>
         
-        <li><a href="/resume/">RESUME</a></li>
-        
       
       </ul>
     </div>
@@ -61,7 +59,7 @@
         </div>
         <div class="blog-title">
           <h4>
-          January 1, 0001
+          May 15, 2020
             &nbsp;&nbsp;
             
           </h4>
@@ -270,7 +268,7 @@ abline(v=diff_survival_time, col=&quot;red&quot;)</code></pre>
 <p><img src="/Project2_files/figure-html/unnamed-chunk-4-1.png" width="768" style="display: block; margin: auto;" /></p>
 <pre class="r"><code>p_value &lt;- mean(rand_dist&gt; 13.19085 | rand_dist&lt; -13.19085)
 p_value</code></pre>
-<pre><code>## [1] 8e-04</code></pre>
+<pre><code>## [1] 6e-04</code></pre>
 </div>
 <div id="null-hypothesis-ho-there-is-no-difference-in-survival-time-between-men-and-women-diagnosed-with-mgus.-alternative-hypothesis-ha-there-is-a-significant-difference-in-survival-time-between-men-and-women-diagnosed-with-mgus.-the-probability-of-us-obtaining-a-mean-difference-of-that-magnitude-between-sexs-by-chance-is-6-10-4-given-our-sampling-distribution-meaning-we-reject-the-null-hypothesis-and-conclude-that-women-live-significantly-longer-than-men-with-mgus." class="section level1">
 <h1>Null hypothesis Ho = There is no difference in survival time between men and women diagnosed with MGUS. Alternative hypothesis Ha = There is a significant difference in survival time between men and women diagnosed with MGUS. The probability of us obtaining a mean difference of that magnitude between sexs by chance is 6 * 10^-4 given our sampling distribution meaning we reject the null hypothesis and conclude that women live significantly longer than men with MGUS.</h1>
@@ -382,8 +380,8 @@ samp_distn&lt;-replicate(5000, {
 samp_distn%&gt;%t%&gt;%as.data.frame%&gt;%summarize_all(sd)</code></pre>
 <pre><code>## (Intercept) age mspike hgb age:mspike age:hgb mspike:hgb
 age:mspike:hgb
-## 1 1.74189 0.1556474 3.051019 0.8677785 0.2626638
-0.06866794 1.433663 0.1002255</code></pre>
+## 1 1.798188 0.1577011 3.064905 0.8766527 0.2600344
+0.06915664 1.472613 0.101242</code></pre>
 </div>
 <div id="the-bootstrapped-ses-and-p-values-are-extremely-similar-to-the-robust-and-original-ses-and-are-slightly-smaller-on-average.-the-p-values-also-slightly-decreased-with-the-decrease-in-se." class="section level1">
 <h1>The bootstrapped SE’s and p values are extremely similar to the robust and original SE’s and are slightly smaller on average. THe p values also slightly decreased with the decrease in SE.</h1>
@@ -514,7 +512,7 @@ for(i in 1:k){
 
 summarize_all(diags,mean) #average diagnostics across all k folds</code></pre>
 <pre><code>##         acc      sens      spec       ppv       auc
-## 1 0.7419118 0.9151812 0.3409932 0.7632707 0.7636546</code></pre>
+## 1 0.7455882 0.9168396 0.3507535 0.7670086 0.7628365</code></pre>
 </div>
 <div id="out-of-sample-accuracy-0.744-sensitivity-0.915-recall-0.765-and-auc-0.764.-this-shows-that-we-werent-overfitting-because-these-statistics-are-very-similar-to-the-modeling-performace-on-the-entire-dataset." class="section level1">
 <h1>Out of sample Accuracy = 0.744, Sensitivity 0.915, Recall 0.765, and AUC = 0.764. This shows that we weren’t overfitting because these statistics are very similar to the modeling performace on the entire dataset.</h1>
@@ -531,18 +529,18 @@ cv &lt;- cv.glmnet(x,y) #picks an optimal value for lambda through 10-fold CV
 lasso&lt;-glmnet(x,y,family=&quot;binomial&quot;,lambda=cv$lambda.1se)
 coef(lasso)</code></pre>
 <pre><code>## 11 x 1 sparse Matrix of class &quot;dgCMatrix&quot;
-##                        s0
-## (Intercept) 702.350462399
-## id            .          
-## age           0.034590132
-## sexM          .          
-## dxyr         -0.352847661
-## hgb           .          
-## creat         0.005909273
-## mspike        .          
-## ptime        -0.019693447
-## pstat         0.194014365
-## futime       -0.011047069</code></pre>
+##                       s0
+## (Intercept) 790.02277318
+## id            .         
+## age           0.03656325
+## sexM          .         
+## dxyr         -0.39686160
+## hgb           .         
+## creat         0.03318831
+## mspike        .         
+## ptime        -0.01549706
+## pstat         0.44869015
+## futime       -0.01869402</code></pre>
 <pre class="r"><code>fit4&lt;-glm(death ~ ., data = mgus2lasso, family=binomial(link=&quot;logit&quot;))
 
 mgus2lasso$prob&lt;-predict(fit4,type=&quot;response&quot;) #get predicted probabilities
@@ -584,8 +582,8 @@ for(i in 1:k){
 
 
 summarize_all(diags,mean) #average diagnostics across all k folds</code></pre>
-<pre><code>##         acc     sens    spec       ppv       auc
-## 1 0.9409494 0.948902 0.92385 0.9663201 0.9774214</code></pre>
+<pre><code>##         acc      sens      spec       ppv       auc
+## 1 0.9402256 0.9468861 0.9240325 0.9674896 0.9737523</code></pre>
 </div>
 <div id="using-the-lasso-variables-my-logistic-regression-is-able-to-do-a-much-better-job-on-out-of-sample-accuracy-sensitivity-and-specificity.-its-clear-my-assumptions-on-what-factors-would-influence-the-death-of-the-patient-biased-my-previous-models." class="section level1">
 <h1>Using the lasso variables, my logistic regression is able to do a MUCH better job on out of sample accuracy, sensitivity, and specificity. It’s clear my assumptions on what factors would influence the death of the patient biased my previous models.</h1>

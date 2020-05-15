@@ -1,0 +1,50 @@
+---
+title: Post One
+author: ''
+date: '2020-05-15'
+slug: post-one
+categories: []
+tags: []
+description: ''
+---
+![The story of my semester](/blog/2020-05-15-post-one_files/covid19.jpg)
+
+This is where I'm going to show working python code and going between R and python code.
+
+
+
+```{python}
+
+x = [0,1,3,5,6,10,4,6,3,7,8,3,2,6,0]
+y = [2,3,6,3,6,8,4,2,1,4,9,2,3,6,1]
+
+yplus1=[] #create empty list
+for i in range(len(y)):
+  yplus1.append(y[i]+1)
+  
+print(yplus1)
+```
+
+```{r}
+library(reticulate)
+library(ggplot2)
+
+ggplot() + geom_point(aes(py$x, py$yplus1))
+
+```
+
+```{python}
+import re
+
+string = "Test this ability to import packages"
+
+re.match("Test", string)
+
+newstring = "1245, 3468, 3235, 5576"
+
+re.findall("^1.{3}", newstring)
+
+re.findall(".{3}6$", newstring)
+
+```
+

@@ -1,0 +1,25 @@
+{
+    "collab_server" : "",
+    "contents" : "",
+    "created" : 1589579655265.000,
+    "dirty" : false,
+    "encoding" : "UTF-8",
+    "folds" : "",
+    "hash" : "0",
+    "id" : "457CBE51",
+    "lastKnownWriteTime" : 1589583084,
+    "last_content_update" : 1589583084233,
+    "path" : "C:/Users/Jack Prazich/Desktop/Website/content/blog/2020-05-15-post-one.Rmd",
+    "project_path" : "content/blog/2020-05-15-post-one.Rmd",
+    "properties" : {
+        "cursorPosition" : "46,31",
+        "scrollLine" : "39"
+    },
+    "read_only" : false,
+    "read_only_alternatives" : [
+    ],
+    "relative_order" : 4,
+    "source_on_save" : false,
+    "source_window" : "",
+    "type" : "r_markdown"
+}
