@@ -14,6 +14,7 @@ This is where I'm going to show working python code and going between R and pyth
 
 
 ```{python}
+#This is python code
 
 x = [0,1,3,5,6,10,4,6,3,7,8,3,2,6,0]
 y = [2,3,6,3,6,8,4,2,1,4,9,2,3,6,1]
@@ -26,6 +27,7 @@ print(yplus1)
 ```
 
 ```{r}
+# This is R code
 library(reticulate)
 library(ggplot2)
 
@@ -34,6 +36,7 @@ ggplot() + geom_point(aes(py$x, py$yplus1))
 ```
 
 ```{python}
+# Back to python
 import re
 
 string = "Test this ability to import packages"
