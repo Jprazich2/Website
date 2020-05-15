@@ -36,6 +36,15 @@ ggplot() + geom_point(aes(py$x, py$yplus1))
 ```
 
 ```{python}
+
+
+dict1 = {1:'Fenves', 2:'left', 3:'us', 4:'when', 5:'we',
+6:'needed', 7: 'him', 8:'most', 9:'just', 10:'like', 11:'the', 12:'Avatar', 13:'except', 14:'Fenves', 15:'only', 16: 'bends', 17:'oil'}
+
+print(dict1.values())
+```
+
+```{python}
 # Back to python
 import re
 

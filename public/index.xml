@@ -19,7 +19,7 @@
       <guid>/blog/post-one/</guid>
       <description>The story of my semester
 This is where I’m going to show working python code and going between R and python code.
-#This is python codex = [0,1,3,5,6,10,4,6,3,7,8,3,2,6,0]y = [2,3,6,3,6,8,4,2,1,4,9,2,3,6,1]yplus1=[] #create empty listfor i in range(len(y)):yplus1.append(y[i]+1)print(yplus1)## [3, 4, 7, 4, 7, 9, 5, 3, 2, 5, 10, 3, 4, 7, 2]# This is R codelibrary(reticulate)library(ggplot2)ggplot() + geom_point(aes(py$x, py$yplus1))# Back to pythonimport restring = &amp;quot;Test this ability to import packages&amp;quot;re.</description>
+#This is python codex = [0,1,3,5,6,10,4,6,3,7,8,3,2,6,0]y = [2,3,6,3,6,8,4,2,1,4,9,2,3,6,1]yplus1=[] #create empty listfor i in range(len(y)):yplus1.append(y[i]+1)print(yplus1)## [3, 4, 7, 4, 7, 9, 5, 3, 2, 5, 10, 3, 4, 7, 2]# This is R codelibrary(reticulate)library(ggplot2)ggplot() + geom_point(aes(py$x, py$yplus1))dict1 = {1:&amp;#39;Fenves&amp;#39;, 2:&amp;#39;left&amp;#39;, 3:&amp;#39;us&amp;#39;, 4:&amp;#39;when&amp;#39;, 5:&amp;#39;we&amp;#39;,6:&amp;#39;needed&amp;#39;, 7: &amp;#39;him&amp;#39;, 8:&amp;#39;most&amp;#39;, 9:&amp;#39;just&amp;#39;, 10:&amp;#39;like&amp;#39;, 11:&amp;#39;the&amp;#39;, 12:&amp;#39;Avatar&amp;#39;, 13:&amp;#39;except&amp;#39;, 14:&amp;#39;Fenves&amp;#39;, 15:&amp;#39;only&amp;#39;, 16: &amp;#39;bends&amp;#39;, 17:&amp;#39;oil&amp;#39;}print(dict1.</description>
     </item>
     
     <item>
